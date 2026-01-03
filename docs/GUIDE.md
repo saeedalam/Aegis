@@ -268,7 +268,41 @@ See [PLUGINS.md](PLUGINS.md) for full documentation.
 
 ---
 
-## Claude Desktop Integration
+## Integration with Claude
+
+### Claude Code (CLI) — Recommended
+
+Add Aegis globally (works in any project):
+
+```bash
+# Install Aegis binary
+cp target/release/aegis ~/bin/aegis
+
+# Add to Claude Code
+claude mcp add --scope user aegis -- ~/bin/aegis --stdio
+
+# Verify connection
+claude mcp list
+# Output: aegis: ~/bin/aegis --stdio - ✓ Connected
+```
+
+Now in Claude Code, you have access to all 57 Aegis tools:
+
+```
+> What tools do you have from aegis?
+
+⏺ Available tools from aegis:
+  - echo, get_time, uuid_generate
+  - fs_read_file, fs_write_file
+  - memory_store, memory_recall, memory_list, memory_delete
+  - git_status, git_diff, git_log, git_commit, git_branch
+  - http_request, web_search, web_extract
+  - vector_store, vector_search
+  - llm_openai, llm_anthropic
+  ... and 40+ more
+```
+
+### Claude Desktop (macOS App)
 
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
@@ -276,14 +310,37 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "aegis": {
-      "command": "/path/to/aegis",
+      "command": "/Users/YOUR_USERNAME/bin/aegis",
       "args": ["--stdio"]
     }
   }
 }
 ```
 
-See [CLAUDE_INTEGRATION.md](CLAUDE_INTEGRATION.md) for full setup guide.
+Then restart Claude Desktop.
+
+### Cursor IDE
+
+Add to Cursor MCP settings:
+
+```json
+{
+  "aegis": {
+    "command": "/Users/YOUR_USERNAME/bin/aegis",
+    "args": ["--stdio"]
+  }
+}
+```
+
+### Removing Aegis
+
+```bash
+# From Claude Code
+claude mcp remove aegis --scope user
+
+# From Claude Desktop
+# Edit the config file and remove the "aegis" entry
+```
 
 ---
 

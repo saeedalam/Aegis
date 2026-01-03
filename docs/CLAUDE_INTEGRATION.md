@@ -1,339 +1,313 @@
-# Integrating Nexus with Claude Desktop
+# Aegis + Claude Integration Guide
 
-This guide shows you how to connect Nexus to Claude Desktop, giving Claude access to tools, persistent memory, file operations, shell commands, and HTTP requests.
+## Overview
 
-## Quick Setup (5 minutes)
+Aegis provides 57 tools that Claude (Code, Desktop, or API) can use via the Model Context Protocol (MCP). This guide covers all integration methods.
 
-### Step 1: Build Nexus
+---
+
+## Claude Code (CLI) — Recommended
+
+Claude Code is the terminal-based Claude interface. This is the easiest integration.
+
+### Step 1: Install Aegis
 
 ```bash
-cd /path/to/nexus
+# Clone and build
+git clone https://github.com/saeedalam/Aegis
+cd Aegis
 cargo build --release
+
+# Copy to a permanent location
+mkdir -p ~/bin
+cp target/release/aegis ~/bin/aegis
 ```
 
-### Step 2: Find Your Binary Path
+### Step 2: Add to Claude Code
 
 ```bash
-# Get the full path to the nexus binary
-realpath target/release/nexus
-# Example output: /Users/you/nexus/target/release/nexus
+# Add globally (available in all projects)
+claude mcp add --scope user aegis -- ~/bin/aegis --stdio
+
+# Verify connection
+claude mcp list
 ```
 
-### Step 3: Configure Claude Desktop
+Expected output:
+```
+aegis: /Users/you/bin/aegis --stdio - ✓ Connected
+```
 
-Edit Claude Desktop's configuration file:
+### Step 3: Use in Claude Code
 
-**macOS:**
+Start Claude Code and ask:
+
+```
+> What tools do you have from aegis?
+```
+
+Claude will list all 57 available tools.
+
+### Example Usage
+
+```
+> Use aegis to store "hello world" in memory with key "greeting"
+
+⏺ I'll use the memory_store tool from aegis.
+
+⏺ mcp__aegis__memory_store({"key": "greeting", "value": "hello world"})
+  ⎿ Stored 'greeting' successfully
+
+> Now recall it
+
+⏺ mcp__aegis__memory_recall({"key": "greeting"})
+  ⎿ hello world
+```
+
+### Managing Aegis in Claude Code
+
 ```bash
-code ~/Library/Application\ Support/Claude/claude_desktop_config.json
+# List all MCP servers
+claude mcp list
+
+# Get details about aegis
+claude mcp get aegis
+
+# Remove aegis
+claude mcp remove aegis --scope user
+
+# Re-add with different path
+claude mcp add --scope user aegis -- /new/path/to/aegis --stdio
 ```
 
-**Windows:**
+### Troubleshooting Claude Code
+
+**"Failed to connect"**
 ```bash
-code %APPDATA%\Claude\claude_desktop_config.json
+# Test aegis manually
+echo '{"jsonrpc":"2.0","method":"initialize","params":{},"id":1}' | ~/bin/aegis --stdio
 ```
 
-**Linux:**
+**"No MCP servers configured"**
 ```bash
-code ~/.config/Claude/claude_desktop_config.json
+# Check if added correctly
+cat ~/.claude.json | grep -A5 aegis
 ```
 
-Add Nexus as an MCP server:
+**Tools not appearing**
+```bash
+# Restart Claude Code after adding
+# Make sure to use --stdio flag
+claude mcp remove aegis --scope user
+claude mcp add --scope user aegis -- ~/bin/aegis --stdio
+```
+
+---
+
+## Claude Desktop (macOS App)
+
+### Step 1: Locate Config File
+
+```bash
+# Open config file
+open ~/Library/Application\ Support/Claude/claude_desktop_config.json
+```
+
+### Step 2: Add Aegis
+
+Edit the file to include:
 
 ```json
 {
   "mcpServers": {
-    "nexus": {
-      "command": "/full/path/to/nexus",
-      "args": ["--stdio", "-c", "/path/to/nexus.json"],
-      "env": {}
+    "aegis": {
+      "command": "/Users/YOUR_USERNAME/bin/aegis",
+      "args": ["--stdio"]
     }
   }
 }
 ```
 
-### Step 4: Create Nexus Configuration (Optional)
+**Important:** Replace `YOUR_USERNAME` with your actual username.
 
-Create `nexus.json` in your preferred location:
+### Step 3: Restart Claude Desktop
+
+Quit Claude Desktop completely (Cmd+Q) and reopen.
+
+### Step 4: Verify
+
+In Claude Desktop, ask:
+```
+What MCP servers do you have access to?
+```
+
+---
+
+## Cursor IDE
+
+### Step 1: Open MCP Settings
+
+In Cursor:
+1. Open Settings (Cmd+,)
+2. Search for "MCP"
+3. Click "Edit in settings.json"
+
+### Step 2: Add Aegis
 
 ```json
 {
-  "server_name": "nexus",
-  "database_path": "~/.nexus/memory.db",
+  "mcp.servers": {
+    "aegis": {
+      "command": "/Users/YOUR_USERNAME/bin/aegis",
+      "args": ["--stdio"]
+    }
+  }
+}
+```
+
+### Step 3: Restart Cursor
+
+Reload the window or restart Cursor.
+
+---
+
+## Available Tools
+
+Once connected, Claude has access to these tool categories:
+
+| Category | Tools | Use For |
+|----------|-------|---------|
+| **Memory** | `memory_store`, `memory_recall`, `memory_list`, `memory_delete` | Persistent storage across sessions |
+| **Files** | `fs_read_file`, `fs_write_file` | Reading/writing files |
+| **Git** | `git_status`, `git_diff`, `git_log`, `git_commit`, `git_branch` | Version control |
+| **Web** | `http_request`, `web_search`, `web_extract` | API calls, web scraping |
+| **LLM** | `llm_openai`, `llm_anthropic`, `llm_embed` | Call other LLMs |
+| **Vector** | `vector_store`, `vector_search` | Semantic search |
+| **Secrets** | `secrets_set`, `secrets_get`, `secrets_list` | Secure credential storage |
+| **Conversations** | `conversation_create`, `conversation_add`, `conversation_get` | Multi-turn history |
+| **Workflows** | `workflow_run`, `workflow_define`, `workflow_execute` | Multi-step automation |
+| **Scheduler** | `scheduler_create`, `scheduler_list`, `scheduler_run` | Cron-like tasks |
+| **Utilities** | `echo`, `get_time`, `uuid_generate`, `hash_sha256`, `base64_*`, `json_*`, `regex_*` | Data processing |
+| **System** | `cmd_exec`, `env_get`, `env_list`, `sys_info` | System interaction |
+| **Notifications** | `notify_slack`, `notify_discord`, `notify_email`, `webhook_send` | Send alerts |
+
+---
+
+## Security Configuration
+
+By default, Aegis restricts file and command access. To customize:
+
+Create `~/bin/aegis.json`:
+
+```json
+{
   "security": {
     "allowed_read_paths": [
-      "~",
+      "/Users/YOUR_USERNAME/projects",
       "/tmp"
     ],
     "allowed_write_paths": [
       "/tmp",
-      "~/Documents"
+      "/Users/YOUR_USERNAME/projects/output"
     ],
     "allowed_commands": [
-      "ls", "cat", "head", "tail", "grep", "find",
-      "echo", "date", "pwd", "which",
-      "git", "npm", "node", "python3", "cargo"
-    ]
-  },
-  "http_client": {
-    "blocked_urls": []
+      "ls", "cat", "echo", "date", "pwd", "git",
+      "python", "node", "npm", "cargo"
+    ],
+    "tool_timeout_secs": 60
   }
 }
 ```
 
-### Step 5: Restart Claude Desktop
-
-Quit and restart Claude Desktop. Nexus tools will now be available!
-
----
-
-## Available Tools for Claude
-
-Once connected, Claude has access to these tools:
-
-### 🔧 Basic Tools
-
-| Tool | Description | Example Use |
-|------|-------------|-------------|
-| `echo` | Echo text back | Testing connectivity |
-| `get_time` | Get current time | "What time is it?" |
-
-### 📁 File Operations
-
-| Tool | Description | Example Use |
-|------|-------------|-------------|
-| `fs.read_file` | Read file contents | "Read my config file" |
-| `fs.write_file` | Write to a file | "Save this to notes.txt" |
-
-### 💻 Shell Commands
-
-| Tool | Description | Example Use |
-|------|-------------|-------------|
-| `cmd.exec` | Run shell commands | "List files in this directory" |
-
-### 🧠 Memory (Persistent)
-
-| Tool | Description | Example Use |
-|------|-------------|-------------|
-| `memory.store` | Remember something | "Remember my API key is xyz" |
-| `memory.recall` | Recall something | "What's my API key?" |
-| `memory.list` | List all memories | "What do you remember?" |
-| `memory.delete` | Forget something | "Forget my API key" |
-
-### 🌐 HTTP Requests
-
-| Tool | Description | Example Use |
-|------|-------------|-------------|
-| `http.request` | Make HTTP calls | "Check if example.com is up" |
-
-### 🛠️ Utility Tools
-
-| Tool | Description | Example Use |
-|------|-------------|-------------|
-| `base64.encode` | Encode to Base64 | "Encode this in base64" |
-| `base64.decode` | Decode from Base64 | "Decode this base64" |
-| `json.parse` | Parse JSON | "Format this JSON nicely" |
-| `json.query` | Query JSON | "Get the 'name' field from this JSON" |
-| `uuid.generate` | Generate UUID | "Give me a unique ID" |
-| `hash.sha256` | Hash text | "Hash my password" |
-| `regex.match` | Match regex | "Find all emails in this text" |
-| `regex.replace` | Replace with regex | "Replace all numbers with X" |
-
----
-
-## Example Conversations with Claude
-
-### Using Memory
-
-```
-You: Remember that my favorite programming language is Rust
-
-Claude: I'll store that for you.
-[Uses memory.store with key="favorite_language", value="Rust"]
-
-Done! I'll remember that your favorite programming language is Rust.
-
----
-
-You: What's my favorite language?
-
-Claude: Let me check my memory.
-[Uses memory.recall with key="favorite_language"]
-
-Your favorite programming language is Rust!
-```
-
-### File Operations
-
-```
-You: Read my ~/.bashrc file
-
-Claude: I'll read that file for you.
-[Uses fs.read_file with path="~/.bashrc"]
-
-Here's your .bashrc:
-[displays file contents]
-```
-
-### Making HTTP Requests
-
-```
-You: What's the current Bitcoin price?
-
-Claude: I'll check a crypto API.
-[Uses http.request to call a price API]
-
-The current Bitcoin price is $XX,XXX.
-```
-
-### Shell Commands
-
-```
-You: How much disk space do I have?
-
-Claude: Let me check.
-[Uses cmd.exec with command="df", args=["-h"]]
-
-Here's your disk usage:
-[displays output]
-```
-
----
-
-## Security Considerations
-
-### For Personal Use
-
-The default development config is fine:
-
-```json
-{
-  "auth": { "enabled": false },
-  "rate_limit": { "enabled": false },
-  "security": {
-    "allowed_read_paths": [".", "~", "/tmp"],
-    "allowed_write_paths": [".", "/tmp"],
-    "allowed_commands": ["*"]
-  }
-}
-```
-
-### For Shared/Production Use
-
-Enable authentication and restrict access:
-
-```json
-{
-  "auth": {
-    "enabled": true,
-    "api_keys": ["YOUR_HASHED_API_KEY"]
-  },
-  "rate_limit": {
-    "enabled": true,
-    "requests_per_second": 10
-  },
-  "security": {
-    "allowed_read_paths": ["/approved/path"],
-    "allowed_write_paths": ["/tmp"],
-    "allowed_commands": ["ls", "cat", "echo"]
-  },
-  "http_client": {
-    "allowed_urls": ["^https://api\\.approved\\.com"]
-  }
-}
-```
-
-### Generating API Key Hashes
+Then update the MCP config to use `-c`:
 
 ```bash
-# Generate a random API key
-openssl rand -hex 32
-# Output: a1b2c3d4e5f6...
-
-# Hash it for the config
-echo -n "a1b2c3d4e5f6..." | shasum -a 256
-# Output: 5e884898da28047d... (use this in config)
+claude mcp remove aegis --scope user
+claude mcp add --scope user aegis -- ~/bin/aegis --stdio -c ~/bin/aegis.json
 ```
 
 ---
 
-## Troubleshooting
+## Common Use Cases
 
-### Claude doesn't see Nexus tools
+### 1. Persistent Memory
 
-1. Check the config path is correct
-2. Verify the binary is executable: `chmod +x /path/to/nexus`
-3. Test manually: `/path/to/nexus --stdio`
-4. Check Claude Desktop logs
+```
+> Remember that the project deadline is January 15th
+⏺ mcp__aegis__memory_store({"key": "deadline", "value": "January 15th"})
 
-### "Permission denied" errors
-
-Update `security.allowed_*` in your `nexus.json`:
-
-```json
-{
-  "security": {
-    "allowed_read_paths": ["/the/path/you/need"],
-    "allowed_write_paths": ["/the/path/you/need"],
-    "allowed_commands": ["the-command-you-need"]
-  }
-}
+# Later session...
+> What's the project deadline?
+⏺ mcp__aegis__memory_recall({"key": "deadline"})
+⎿ January 15th
 ```
 
-### Memory not persisting
+### 2. Save Conversation Context
 
-Check `database_path` in config:
+```
+> Start a new conversation called "feature-discussion"
+⏺ mcp__aegis__conversation_create({"title": "feature-discussion"})
 
-```json
-{
-  "database_path": "/absolute/path/to/nexus.db"
-}
+> Add this to the conversation: "We decided to use React for the frontend"
+⏺ mcp__aegis__conversation_add({"conversation_id": "...", "role": "user", "content": "..."})
+
+# Later...
+> What did we decide about the frontend?
+⏺ mcp__aegis__conversation_search({"query": "frontend"})
 ```
 
-### HTTP requests blocked
+### 3. Web Search
 
-Check `http_client.blocked_urls` - by default, localhost/internal IPs are blocked:
-
-```json
-{
-  "http_client": {
-    "blocked_urls": []
-  }
-}
+```
+> Search for "Rust async best practices"
+⏺ mcp__aegis__web_search({"query": "Rust async best practices"})
 ```
 
----
+### 4. API Calls
 
-## Advanced: Multiple Configurations
+```
+> Get the current weather from wttr.in
+⏺ mcp__aegis__http_request({"url": "https://wttr.in/?format=3", "method": "GET"})
+```
 
-You can have different configs for different use cases:
+### 5. Git Operations
 
-```json
-{
-  "mcpServers": {
-    "nexus-work": {
-      "command": "/path/to/nexus",
-      "args": ["--stdio", "-c", "~/.nexus/work.json"]
-    },
-    "nexus-personal": {
-      "command": "/path/to/nexus",
-      "args": ["--stdio", "-c", "~/.nexus/personal.json"]
-    }
-  }
-}
+```
+> What's the git status?
+⏺ mcp__aegis__git_status({"path": "."})
+
+> Show me the last 5 commits
+⏺ mcp__aegis__git_log({"path": ".", "limit": 5})
 ```
 
 ---
 
-## What's Next?
+## Disabling Extra Tools
 
-With Nexus connected to Claude, you can:
+For a minimal setup (21 core tools only):
 
-1. **Build agents** that remember context across conversations
-2. **Automate tasks** using shell commands and file operations
-3. **Integrate APIs** using HTTP requests
-4. **Process data** using JSON/regex/encoding tools
+```bash
+claude mcp remove aegis --scope user
+claude mcp add --scope user aegis -- ~/bin/aegis --stdio --core-only
+```
 
-Claude now has persistent memory and real-world capabilities! 🚀
+---
 
+## Uninstalling
 
+```bash
+# Remove from Claude Code
+claude mcp remove aegis --scope user
+
+# Remove binary
+rm ~/bin/aegis
+
+# Remove database (optional)
+rm ~/bin/aegis.db
+```
+
+---
+
+<p align="center">
+  <strong>Aegis — Secure local MCP tool server with script plugins</strong>
+</p>
