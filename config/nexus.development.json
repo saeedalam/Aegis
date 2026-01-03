@@ -1,0 +1,46 @@
+{
+  "server_name": "nexus-dev",
+  "server_version": "0.2.0",
+  "host": "127.0.0.1",
+  "port": 9000,
+  "log_level": "debug",
+  "json_logs": false,
+  "database_path": "nexus-dev.db",
+  
+  "auth": {
+    "enabled": false
+  },
+  
+  "rate_limit": {
+    "enabled": false
+  },
+  
+  "security": {
+    "allowed_read_paths": [
+      ".",
+      "/tmp",
+      "/Users"
+    ],
+    "allowed_write_paths": [
+      ".",
+      "/tmp"
+    ],
+    "allowed_commands": [
+      "ls", "cat", "head", "tail", "wc",
+      "echo", "date", "whoami", "pwd",
+      "grep", "find", "which", "curl",
+      "git", "npm", "node", "python3"
+    ],
+    "tool_timeout_secs": 60
+  },
+  
+  "http_client": {
+    "timeout_secs": 30,
+    "max_response_bytes": 10485760,
+    "allowed_urls": [],
+    "blocked_urls": [],
+    "user_agent": "Nexus-Dev/0.2.0"
+  }
+}
+
+

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "nexus": {
+      "command": "/path/to/nexus",
+      "args": ["--stdio"],
+      "env": {}
+    }
+  }
+}
+
+

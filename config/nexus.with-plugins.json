@@ -1,0 +1,71 @@
+{
+  "server_name": "nexus",
+  "database_path": "nexus-plugins.db",
+  
+  "plugins": [
+    {
+      "name": "weather.get",
+      "description": "Gets weather information for a city (demo - uses wttr.in)",
+      "command": "curl",
+      "args_template": ["-s", "wttr.in/${city}?format=3"],
+      "timeout_secs": 10,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "City name (e.g., 'London', 'Tokyo')"
+          }
+        },
+        "required": ["city"]
+      }
+    },
+    {
+      "name": "python.eval",
+      "description": "Evaluates a Python expression and returns the result",
+      "command": "python3",
+      "args_template": ["-c", "print(${expression})"],
+      "timeout_secs": 5,
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "Python expression to evaluate"
+          }
+        },
+        "required": ["expression"]
+      }
+    },
+    {
+      "name": "git.status",
+      "description": "Gets git status of the current directory",
+      "command": "git",
+      "args_template": ["status", "--short"],
+      "timeout_secs": 5,
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "system.uptime",
+      "description": "Gets system uptime",
+      "command": "uptime",
+      "args_template": [],
+      "timeout_secs": 5,
+      "input_schema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ],
+  
+  "security": {
+    "allowed_read_paths": [".", "/tmp"],
+    "allowed_write_paths": ["/tmp"],
+    "allowed_commands": ["ls", "cat", "echo", "date", "pwd"]
+  }
+}
+
+
