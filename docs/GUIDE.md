@@ -24,15 +24,15 @@
 
 ### Key Features
 
-| Feature | Description |
-|---------|-------------|
-| **Single Binary** | No Docker, no dependencies - just one executable |
-| **Core + Extras** | 21 core tools + 36 optional extras |
-| **Plugin System** | Add custom tools via config (no code changes) |
-| **Persistent Memory** | SQLite-backed key-value store |
-| **Dual Transport** | CLI (stdio) or HTTP/SSE server |
-| **Security First** | Path restrictions, command allowlisting, sandboxed execution |
-| **MCP Protocol** | Industry-standard AI agent protocol |
+| Feature               | Description                                                  |
+| --------------------- | ------------------------------------------------------------ |
+| **Single Binary**     | No Docker, no dependencies - just one executable             |
+| **Core + Extras**     | 21 core tools + 36 optional extras                           |
+| **Plugin System**     | Add custom tools via config (no code changes)                |
+| **Persistent Memory** | SQLite-backed key-value store                                |
+| **Dual Transport**    | CLI (stdio) or HTTP/SSE server                               |
+| **Security First**    | Path restrictions, command allowlisting, sandboxed execution |
+| **MCP Protocol**      | Industry-standard AI agent protocol                          |
 
 ---
 
@@ -153,7 +153,12 @@ aegis --stdio
 Then send JSON-RPC messages on stdin:
 
 ```json
-{"jsonrpc":"2.0","method":"initialize","params":{"clientInfo":{"name":"my-agent"}},"id":1}
+{
+  "jsonrpc": "2.0",
+  "method": "initialize",
+  "params": { "clientInfo": { "name": "my-agent" } },
+  "id": 1
+}
 ```
 
 ### Mode 4: Core Only (`aegis --core-only`)
@@ -170,29 +175,29 @@ aegis --core-only serve
 
 ### Core Tools (Always Loaded)
 
-| Category | Tools | Description |
-|----------|-------|-------------|
-| **Basic** | `echo`, `get_time`, `uuid.generate` | Testing, timestamps, unique IDs |
-| **Files** | `fs.read_file`, `fs.write_file` | Sandboxed file I/O |
-| **Commands** | `cmd.exec` | Restricted shell execution |
-| **Memory** | `memory.store/recall/list/delete` | Persistent key-value store |
-| **HTTP** | `http.request` | HTTP client (GET/POST/PUT/DELETE) |
-| **System** | `env.get`, `env.list`, `sys.info` | Environment and system info |
-| **Data** | `base64.*`, `json.*`, `hash.*`, `regex.*` | Data transformation |
+| Category     | Tools                                     | Description                       |
+| ------------ | ----------------------------------------- | --------------------------------- |
+| **Basic**    | `echo`, `get_time`, `uuid.generate`       | Testing, timestamps, unique IDs   |
+| **Files**    | `fs.read_file`, `fs.write_file`           | Sandboxed file I/O                |
+| **Commands** | `cmd.exec`                                | Restricted shell execution        |
+| **Memory**   | `memory.store/recall/list/delete`         | Persistent key-value store        |
+| **HTTP**     | `http.request`                            | HTTP client (GET/POST/PUT/DELETE) |
+| **System**   | `env.get`, `env.list`, `sys.info`         | Environment and system info       |
+| **Data**     | `base64.*`, `json.*`, `hash.*`, `regex.*` | Data transformation               |
 
 ### Extra Tools (Optional)
 
-| Category | Tools | Description |
-|----------|-------|-------------|
-| **LLM** | `llm.openai`, `llm.anthropic`, `llm.embed` | LLM API integration |
-| **Vector** | `vector.store/search/list/delete` | Semantic search |
-| **Git** | `git.status/log/diff/commit/branch` | Git operations |
-| **Notifications** | `notify.slack/discord/email`, `webhook.send` | Outbound notifications |
-| **Workflows** | `workflow.run/define/execute/list` | Multi-step automation |
-| **Scheduler** | `scheduler.create/list/delete/toggle/run` | Cron-like scheduling |
-| **Web** | `web.extract`, `web.search` | Web scraping and search |
-| **Conversations** | `conversation.*` | Multi-turn history |
-| **Secrets** | `secrets.set/get/list/delete` | Secure credential storage |
+| Category          | Tools                                        | Description               |
+| ----------------- | -------------------------------------------- | ------------------------- |
+| **LLM**           | `llm.openai`, `llm.anthropic`, `llm.embed`   | LLM API integration       |
+| **Vector**        | `vector.store/search/list/delete`            | Semantic search           |
+| **Git**           | `git.status/log/diff/commit/branch`          | Git operations            |
+| **Notifications** | `notify.slack/discord/email`, `webhook.send` | Outbound notifications    |
+| **Workflows**     | `workflow.run/define/execute/list`           | Multi-step automation     |
+| **Scheduler**     | `scheduler.create/list/delete/toggle/run`    | Cron-like scheduling      |
+| **Web**           | `web.extract`, `web.search`                  | Web scraping and search   |
+| **Conversations** | `conversation.*`                             | Multi-turn history        |
+| **Secrets**       | `secrets.set/get/list/delete`                | Secure credential storage |
 
 ---
 
@@ -210,16 +215,9 @@ Create `aegis.json` in your working directory:
   "extras_enabled": true,
   "log_level": "info",
   "security": {
-    "allowed_read_paths": [
-      "/tmp",
-      "/home/user/data"
-    ],
-    "allowed_write_paths": [
-      "/tmp"
-    ],
-    "allowed_commands": [
-      "ls", "cat", "echo", "date", "pwd", "whoami", "git"
-    ],
+    "allowed_read_paths": ["/tmp", "/home/user/data"],
+    "allowed_write_paths": ["/tmp"],
+    "allowed_commands": ["ls", "cat", "echo", "date", "pwd", "whoami", "git"],
     "tool_timeout_secs": 30
   }
 }
@@ -227,24 +225,24 @@ Create `aegis.json` in your working directory:
 
 ### Configuration Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `server_name` | Server name in MCP responses | `"aegis"` |
-| `server_version` | Server version | `"0.3.0"` |
-| `host` | HTTP server bind address | `"127.0.0.1"` |
-| `port` | HTTP server port | `9000` |
-| `database_path` | SQLite database file | `"aegis.db"` |
-| `extras_enabled` | Load extra tools | `true` |
-| `log_level` | Logging level | `"info"` |
+| Option           | Description                  | Default       |
+| ---------------- | ---------------------------- | ------------- |
+| `server_name`    | Server name in MCP responses | `"aegis"`     |
+| `server_version` | Server version               | `"0.3.0"`     |
+| `host`           | HTTP server bind address     | `"127.0.0.1"` |
+| `port`           | HTTP server port             | `9000`        |
+| `database_path`  | SQLite database file         | `"aegis.db"`  |
+| `extras_enabled` | Load extra tools             | `true`        |
+| `log_level`      | Logging level                | `"info"`      |
 
 ### Security Configuration
 
-| Option | Description |
-|--------|-------------|
-| `allowed_read_paths` | Directories where `fs.read_file` can access |
+| Option                | Description                                 |
+| --------------------- | ------------------------------------------- |
+| `allowed_read_paths`  | Directories where `fs.read_file` can access |
 | `allowed_write_paths` | Directories where `fs.write_file` can write |
-| `allowed_commands` | Shell commands `cmd.exec` can run |
-| `tool_timeout_secs` | Maximum execution time for commands |
+| `allowed_commands`    | Shell commands `cmd.exec` can run           |
+| `tool_timeout_secs`   | Maximum execution time for commands         |
 
 ---
 
@@ -324,15 +322,15 @@ Aegis implements the [Model Context Protocol](https://modelcontextprotocol.io/) 
 
 ### Supported Methods
 
-| Method | Description |
-|--------|-------------|
-| `initialize` | Handshake and capability negotiation |
-| `ping` | Health check |
-| `tools/list` | List available tools |
-| `tools/call` | Execute a tool |
-| `prompts/list` | List prompts (empty) |
-| `resources/list` | List memory resources |
-| `resources/read` | Read a memory resource |
+| Method           | Description                          |
+| ---------------- | ------------------------------------ |
+| `initialize`     | Handshake and capability negotiation |
+| `ping`           | Health check                         |
+| `tools/list`     | List available tools                 |
+| `tools/call`     | Execute a tool                       |
+| `prompts/list`   | List prompts (empty)                 |
+| `resources/list` | List memory resources                |
+| `resources/read` | Read a memory resource               |
 
 ### Example Session
 
